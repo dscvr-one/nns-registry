@@ -1,0 +1,1 @@
+dfx canister install --all

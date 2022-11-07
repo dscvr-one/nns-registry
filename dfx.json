@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "dfx": "0.11.1",
+  "canisters": {
+    "nns_registry": {
+      "type": "rust",
+      "package": "nns-registry",
+      "candid": "src/nns.did"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": "",
+      "args": ""
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  }
+}

@@ -1,0 +1,4 @@
+
+service sns_1_token : {
+    "test": () -> (text) query;
+}

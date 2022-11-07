@@ -1,0 +1,1 @@
+dfx canister call nns_registry test
