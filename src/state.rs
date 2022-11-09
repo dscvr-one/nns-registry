@@ -82,7 +82,10 @@ impl State {
 
     pub fn add_nns_principal(&mut self, caller: Principal, nns_principal: Principal) -> Result<(), String> {
         if self.nns_principals.len() == self.max_neurons {
-            return Err(format!("Maximum number of neurons ({:?}) have been claimed.", self.max_neurons))
+            return Err(format!(
+                "Maximum number of neurons ({:?}) have been claimed.",
+                self.max_neurons
+            ));
         }
         if let Some(is_used) = self
             .whitelist
