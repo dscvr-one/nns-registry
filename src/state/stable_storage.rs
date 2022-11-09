@@ -5,6 +5,7 @@ use ic_cdk::api::stable;
 
 #[derive(Serialize, Deserialize, Clone, CandidType)]
 pub struct StableStorage {
+    pub(crate) max_neurons: usize,
     pub(crate) nns_principals: Vec<Principal>,
     pub(crate) whitelist: Vec<(Principal, bool)>,
     pub(crate) controllers: ServiceControllers,
@@ -13,6 +14,7 @@ pub struct StableStorage {
 impl From<&mut State> for StableStorage {
     fn from(state: &mut State) -> Self {
         Self {
+            max_neurons: std::mem::take(&mut state.max_neurons),
             nns_principals: std::mem::take(&mut state.nns_principals.iter().cloned().collect()),
             whitelist: std::mem::take(&mut state.whitelist.iter().map(|(k, v)| (*k, *v)).collect()),
             controllers: std::mem::take(&mut state.controllers),

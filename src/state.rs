@@ -7,16 +7,29 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
-#[derive(Default)]
 pub struct State {
+    max_neurons: usize,
     nns_principals: HashSet<Principal>,
     whitelist: HashMap<Principal, bool>,
     controllers: ServiceControllers,
 }
 
+impl Default for State {
+    fn default() -> Self {
+        let max_neurons = 1_000;
+        Self {
+            max_neurons,
+            nns_principals: HashSet::with_capacity(max_neurons),
+            whitelist: HashMap::with_capacity(max_neurons),
+            controllers: Default::default(),
+        }
+    }
+}
+
 impl From<StableStorage> for State {
     fn from(storage: StableStorage) -> Self {
         Self {
+            max_neurons: storage.max_neurons,
             nns_principals: HashSet::from_iter(storage.nns_principals),
             controllers: storage.controllers,
             whitelist: HashMap::from_iter(storage.whitelist),
@@ -68,6 +81,9 @@ impl State {
     }
 
     pub fn add_nns_principal(&mut self, caller: Principal, nns_principal: Principal) -> Result<(), String> {
+        if self.nns_principals.len() == self.max_neurons {
+            return Err(format!("Maximum number of neurons ({:?}) have been claimed.", self.max_neurons))
+        }
         if let Some(is_used) = self
             .whitelist
             .iter_mut()
@@ -103,5 +119,9 @@ impl State {
 
     pub fn get_nns_principals(&self) -> Vec<Principal> {
         self.nns_principals.iter().cloned().collect()
+    }
+
+    pub fn set_max_neurons(&mut self, max_neurons: usize) {
+        self.max_neurons = max_neurons;
     }
 }
