@@ -4,9 +4,9 @@ type EmptyResult = variant {
 };
 
 type Status = variant {
-    Claimed,
-    Whitelisted,
-    NotWhitelisted
+    Claimed;
+    Whitelisted;
+    NotWhitelisted;
 }
 
 service nns_registry : {
@@ -15,7 +15,7 @@ service nns_registry : {
     remove_admin: (principal) -> (EmptyResult);
     get_admins: () -> (vec principal) query;
 
-    get_status: (principal) -> (bool) Status;
+    get_status: () -> (Status);
 
     // Whitelist Management
     whitelist_principals: (vec principal) -> (vec principal);
@@ -24,5 +24,6 @@ service nns_registry : {
     add_nns_principal: (nns_principal: principal) -> (EmptyResult);
     add_non_dscvr_nns_principal: (site_principal: principal, nns_principal: principal) -> (EmptyResult);
     get_nns_principals: () -> (vec principal) query;
-    set_max_neurons: (nat8) -> (EmptyResult);
+    set_max_neurons: (nat64) -> (EmptyResult);
+    get_max_neurons: () -> (nat64) query;
 }

@@ -110,7 +110,7 @@ impl State {
             return Err(ErrorType::MaxNeuronsClaimed(self.max_neurons));
         }
         if let Some(is_used) = self.whitelist.get_mut(&caller) {
-            if *is_used {
+            if !*is_used {
                 if self.nns_principals.contains(&nns_principal) {
                     return Err(ErrorType::NnsPrincipalAlreadyAssigned);
                 }
@@ -157,5 +157,9 @@ impl State {
         }
         self.max_neurons = max_neurons;
         Ok(())
+    }
+
+    pub fn get_max_neurons(&self) -> usize {
+        self.max_neurons
     }
 }

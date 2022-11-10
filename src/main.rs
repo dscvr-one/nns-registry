@@ -60,9 +60,14 @@ fn get_nns_principals() -> Vec<Principal> {
     State::read_state(|state| state.get_nns_principals())
 }
 
-#[query(guard = "is_admin")]
+#[update(guard = "is_admin")]
 fn set_max_neurons(max_neurons: usize) -> Result<(), String> {
     State::mutate_state(|state| state.set_max_neurons(max_neurons)).map_err(|e| e.to_string())
+}
+
+#[query]
+fn get_max_neurons() -> usize {
+    State::read_state(|state| state.get_max_neurons())
 }
 
 #[query]
