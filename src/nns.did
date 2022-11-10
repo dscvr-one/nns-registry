@@ -15,7 +15,7 @@ service nns_registry : {
     remove_admin: (principal) -> (EmptyResult);
     get_admins: () -> (vec principal) query;
 
-    get_status: () -> (Status);
+    get_status: (principal) -> (Status);
 
     // Whitelist Management
     whitelist_principals: (vec principal) -> (vec principal);
