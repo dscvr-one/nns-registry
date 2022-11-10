@@ -52,11 +52,6 @@ fn add_nns_principal(nns_principal: Principal) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
-#[update(guard = "is_admin")]
-fn add_non_dscvr_nns_principal(site_principal: Principal, nns_principal: Principal) -> Result<(), String> {
-    State::mutate_state(|state| state.add_nns_principal(site_principal, nns_principal)).map_err(|e| e.to_string())
-}
-
 #[query(guard = "is_admin")]
 fn get_nns_principals() -> Vec<Principal> {
     State::read_state(|state| state.get_nns_principals())
