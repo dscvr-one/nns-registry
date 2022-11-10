@@ -45,7 +45,7 @@ let result = call nns.get_nns_principals();
 assert result == vec {};
 
 // check status
-let result = call nns.get_status();
+let result = call nns.get_status(admin);
 assert result == variant { NotWhitelisted };
 
 // set max neurons
@@ -57,11 +57,11 @@ assert stringify(result) == "2";
 
 // claim nns
 identity whitelist_1;
-let result = call nns.get_status();
+let result = call nns.get_status(whitelist_1);
 assert result == variant { Whitelisted };
 let result = call nns.add_nns_principal(nns_principal_1);
 assert result == variant { Ok };
-let result = call nns.get_status();
+let result = call nns.get_status(whitelist_1);
 assert result == variant { Claimed };
 let result = call nns.add_nns_principal(nns_principal_1);
 assert result.Err ~= "The Caller is";
@@ -70,22 +70,22 @@ assert result.Err ~= "The Caller is";
 
 // claim nns
 identity whitelist_2;
-let result = call nns.get_status();
+let result = call nns.get_status(whitelist_2);
 assert result == variant { Whitelisted };
 let result = call nns.add_nns_principal(nns_principal_1);
 assert result.Err ~= "The NNS Principal";
 let result = call nns.add_nns_principal(nns_principal_2);
 assert result == variant { Ok };
-let result = call nns.get_status();
+let result = call nns.get_status(whitelist_2);
 assert result == variant { Claimed };
 
 // nns claim failed since max neurons exceeded
 identity whitelist_3;
-let result = call nns.get_status();
+let result = call nns.get_status(whitelist_3);
 assert result == variant { Whitelisted };
 let result = call nns.add_nns_principal(nns_principal_3);
 assert result.Err ~= "Maximum number";
-let result = call nns.get_status();
+let result = call nns.get_status(whitelist_3);
 assert result == variant { Whitelisted };
 
 // reducing max neurons below claimed should fail
@@ -102,7 +102,7 @@ assert result == variant { Ok };
 identity whitelist_3;
 let result = call nns.add_nns_principal(nns_principal_3);
 assert result == variant { Ok };
-let result = call nns.get_status();
+let result = call nns.get_status(whitelist_3);
 assert result == variant { Claimed };
 
 // three nns principals

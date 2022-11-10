@@ -27,8 +27,8 @@ fn init() {
 }
 
 #[query]
-fn get_status() -> Status {
-    State::read_state(|state| state.get_status(&ic_cdk::api::caller()))
+fn get_status(principal: Principal) -> Status {
+    State::read_state(|state| state.get_status(&principal))
 }
 
 #[update(guard = "is_owner")]

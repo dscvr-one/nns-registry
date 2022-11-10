@@ -7,6 +7,7 @@ dfx identity use default
 dfx canister stop --all
 dfx canister delete --all
 dfx canister create --all
+dfx build
 dfx canister install --all
 NNS_CANISTER_ID=$(dfx canister id nns_registry) \
     ic-repl --replica http://localhost:8000 ${SCRIPT_DIR}/test.ic-repl
