@@ -40,7 +40,6 @@ service nns_registry : {
 
     // NNS List Management
     add_nns_principal: (nns_principal: principal) -> (EmptyResult);
-    add_non_dscvr_nns_principal: (site_principal: principal, nns_principal: principal) -> (EmptyResult);
     get_nns_principals: () -> (vec principal) query;
     set_max_neurons: (nat64) -> (EmptyResult);
     get_max_neurons: () -> (nat64) query;

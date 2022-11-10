@@ -134,15 +134,3 @@ assert stringify(result.available_neurons) == "2";
 identity admin;
 let result = call nns.get_nns_principals();
 assert result.fold(0, count) == 3;
-
-// add_non_dscvr_nns_principal
-identity non_dscvr;
-identity non_dscvr_2;
-identity nns_principal_4;
-identity admin;
-let result = call nns.whitelist_principals(vec { non_dscvr; });
-assert result == vec {};
-let result = call nns.add_non_dscvr_nns_principal(non_dscvr, nns_principal_4);
-assert result == variant { Ok };
-let result = call nns.add_non_dscvr_nns_principal(non_dscvr_2, nns_principal_4);
-assert result.Err ~= "Caller is not an";
