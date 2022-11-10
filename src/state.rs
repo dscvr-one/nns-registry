@@ -3,9 +3,35 @@ pub(crate) mod stable_storage;
 use crate::prelude::*;
 use crate::service_controller::{ServiceControllerKind, ServiceControllers};
 use crate::state::stable_storage::StableStorage;
+use crate::{ServiceController, Stats};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
+
+#[derive(Debug, thiserror::Error)]
+pub enum ErrorType {
+    #[error("Maximum number of neurons ({0}) have been claimed.")]
+    MaxNeuronsClaimed(usize),
+    #[error("The Caller is in the Whitelist but has already assigned their NNS Principal")]
+    CallerAlreadyAssignedPrincipal,
+    #[error("The NNS Principal is already assigned")]
+    NnsPrincipalAlreadyAssigned,
+    #[error("Caller is not an approved member of the whitelist")]
+    CallerNotWhitelisted,
+    #[error("The Principal: {0} is already whitelisted.")]
+    PrincipalAlreadyWhitelisted(Principal),
+    #[error("Setting max neurons to a value less than already claimed.")]
+    InvalidMaxNeurons(usize),
+}
+
+#[derive(CandidType, Serialize, Deserialize)]
+pub enum Status {
+    Whitelisted,
+    NotWhitelisted,
+    Claimed,
+}
+
+pub type Result<T> = std::result::Result<T, ErrorType>;
 
 pub struct State {
     max_neurons: usize,
@@ -68,6 +94,10 @@ impl State {
         self.controllers.add(ServiceControllerKind::Owner, principal)
     }
 
+    pub fn remove_owner(&mut self, principal: &Principal) -> bool {
+        self.controllers.remove(principal, ServiceControllerKind::Owner)
+    }
+
     pub fn add_admin(&mut self, principal: Principal) -> bool {
         self.controllers.add(ServiceControllerKind::Admin, principal)
     }
@@ -80,39 +110,41 @@ impl State {
         self.controllers.has_access(kind, principal)
     }
 
-    pub fn add_nns_principal(&mut self, caller: Principal, nns_principal: Principal) -> Result<(), String> {
+    pub fn add_nns_principal(&mut self, caller: Principal, nns_principal: Principal) -> Result<()> {
         if self.nns_principals.len() == self.max_neurons {
-            return Err(format!(
-                "Maximum number of neurons ({:?}) have been claimed.",
-                self.max_neurons
-            ));
+            return Err(ErrorType::MaxNeuronsClaimed(self.max_neurons));
         }
-        if let Some(is_used) = self
-            .whitelist
-            .iter_mut()
-            .find_map(|(user, is_used)| if *user == caller { Some(*is_used) } else { None })
-        {
-            if is_used {
+        if let Some(is_used) = self.whitelist.get_mut(&caller) {
+            if !*is_used {
+                if self.nns_principals.contains(&nns_principal) {
+                    return Err(ErrorType::NnsPrincipalAlreadyAssigned);
+                }
                 self.nns_principals.insert(nns_principal);
-                self.whitelist.insert(caller, true);
+                *is_used = true;
                 Ok(())
             } else {
-                Err(String::from(
-                    "The Caller is in the Whitelist but has already assigned their NNS Principal",
-                ))
+                Err(ErrorType::CallerAlreadyAssignedPrincipal)
             }
         } else {
-            Err(String::from("Caller is not an approved member of the whitelist"))
+            Err(ErrorType::CallerNotWhitelisted)
         }
     }
 
-    pub fn whitelist_contains(&self, principal: &Principal) -> bool {
-        self.whitelist.iter().any(|(key, _)| principal == key)
+    pub fn get_status(&self, principal: &Principal) -> Status {
+        if let Some(used) = self.whitelist.get(principal) {
+            if *used {
+                Status::Claimed
+            } else {
+                Status::Whitelisted
+            }
+        } else {
+            Status::NotWhitelisted
+        }
     }
 
-    pub fn whitelist_principal(&mut self, principal: Principal) -> Result<(), String> {
+    pub fn whitelist_principal(&mut self, principal: Principal) -> Result<()> {
         match self.whitelist.entry(principal) {
-            Entry::Occupied(_) => Err(format!("The Principal: {:?} is already whitelisted.", principal)),
+            Entry::Occupied(_) => Err(ErrorType::PrincipalAlreadyWhitelisted(principal)),
             Entry::Vacant(entry) => {
                 entry.insert(false);
                 Ok(())
@@ -124,7 +156,28 @@ impl State {
         self.nns_principals.iter().cloned().collect()
     }
 
-    pub fn set_max_neurons(&mut self, max_neurons: usize) {
+    pub fn set_max_neurons(&mut self, max_neurons: usize) -> Result<()> {
+        if self.nns_principals.len() > max_neurons {
+            return Err(ErrorType::InvalidMaxNeurons(self.nns_principals.len()));
+        }
         self.max_neurons = max_neurons;
+        Ok(())
+    }
+
+    pub fn get_max_neurons(&self) -> usize {
+        self.max_neurons
+    }
+
+    pub fn get_stats(&self) -> Stats {
+        let claimed = self.nns_principals.len();
+        Stats {
+            whitelisted: self.whitelist.len(),
+            claimed_neurons: claimed,
+            available_neurons: self.max_neurons - claimed,
+        }
+    }
+
+    pub fn get_service_controllers(&self) -> Vec<ServiceController> {
+        self.controllers.ref_values().clone()
     }
 }
