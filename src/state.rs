@@ -3,6 +3,7 @@ pub(crate) mod stable_storage;
 use crate::prelude::*;
 use crate::service_controller::{ServiceControllerKind, ServiceControllers};
 use crate::state::stable_storage::StableStorage;
+use crate::{ServiceController, Stats};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
@@ -93,6 +94,10 @@ impl State {
         self.controllers.add(ServiceControllerKind::Owner, principal)
     }
 
+    pub fn remove_owner(&mut self, principal: &Principal) -> bool {
+        self.controllers.remove(principal, ServiceControllerKind::Owner)
+    }
+
     pub fn add_admin(&mut self, principal: Principal) -> bool {
         self.controllers.add(ServiceControllerKind::Admin, principal)
     }
@@ -161,5 +166,18 @@ impl State {
 
     pub fn get_max_neurons(&self) -> usize {
         self.max_neurons
+    }
+
+    pub fn get_stats(&self) -> Stats {
+        let claimed = self.nns_principals.len();
+        Stats {
+            whitelisted: self.whitelist.len(),
+            claimed_neurons: claimed,
+            available_neurons: self.max_neurons - claimed,
+        }
+    }
+
+    pub fn get_service_controllers(&self) -> Vec<ServiceController> {
+        self.controllers.ref_values().clone()
     }
 }

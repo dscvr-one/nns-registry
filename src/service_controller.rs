@@ -2,8 +2,6 @@ use crate::prelude::*;
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, CandidType, Deserialize, Serialize, Hash)]
 pub enum ServiceControllerKind {
-    Backup,
-    Restore,
     Admin,
     Owner,
 }

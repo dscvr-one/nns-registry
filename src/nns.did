@@ -7,18 +7,36 @@ type Status = variant {
     Claimed;
     Whitelisted;
     NotWhitelisted;
-}
+};
+
+type ServiceControllerKind = variant {
+    Admin;
+    Owner;
+};
+
+type ServiceController = record {
+    kind: ServiceControllerKind;
+    controller_id: principal;
+    created_at: nat64;
+};
+
+type Stats = record {
+    whitelisted: nat64;
+    claimed_neurons: nat64;
+    available_neurons: nat64;
+};
 
 service nns_registry : {
     // Admin Management
     add_admin: (principal) -> (EmptyResult);
     remove_admin: (principal) -> (EmptyResult);
+    remove_owner: (principal) -> (EmptyResult);
     get_admins: () -> (vec principal) query;
-
-    get_status: (principal) -> (Status);
+    get_service_controllers: () -> (vec ServiceController) query;
 
     // Whitelist Management
     whitelist_principals: (vec principal) -> (vec principal);
+    get_status: (principal) -> (Status);
 
     // NNS List Management
     add_nns_principal: (nns_principal: principal) -> (EmptyResult);
@@ -26,4 +44,5 @@ service nns_registry : {
     get_nns_principals: () -> (vec principal) query;
     set_max_neurons: (nat64) -> (EmptyResult);
     get_max_neurons: () -> (nat64) query;
+    get_stats: () -> (Stats) query;
 }

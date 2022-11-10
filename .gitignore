@@ -11,3 +11,4 @@
 /target
 .idea/
 .dfx
+*.old.did

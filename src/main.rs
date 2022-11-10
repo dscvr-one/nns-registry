@@ -1,6 +1,7 @@
 mod guards;
 mod service_controller;
 mod state;
+mod stats;
 
 pub mod prelude {
     pub use ic_cdk::export::candid::{CandidType, Principal};
@@ -11,8 +12,9 @@ pub mod prelude {
 use std::collections::HashSet;
 
 use crate::guards::*;
-use crate::service_controller::ServiceControllerKind;
+use crate::service_controller::{ServiceController, ServiceControllerKind};
 use crate::state::State;
+use crate::stats::Stats;
 use prelude::*;
 use state::Status;
 
@@ -31,7 +33,7 @@ fn get_status(principal: Principal) -> Status {
     State::read_state(|state| state.get_status(&principal))
 }
 
-#[update(guard = "is_owner")]
+#[update(guard = "is_admin")]
 fn whitelist_principals(principals: Vec<Principal>) -> Vec<Principal> {
     let mut already_whitelisted = HashSet::<Principal>::default();
     State::mutate_state(|state| {
@@ -71,6 +73,16 @@ fn get_max_neurons() -> usize {
 }
 
 #[query]
+fn get_stats() -> Stats {
+    State::read_state(|state| state.get_stats())
+}
+
+#[query]
+fn get_service_controllers() -> Vec<ServiceController> {
+    State::read_state(|state| state.get_service_controllers())
+}
+
+#[query]
 fn get_admins() -> Vec<Principal> {
     State::read_state(|state| state.get_admins())
 }
@@ -94,7 +106,20 @@ fn remove_admin(principal: Principal) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!(
-            "The pair Principal: {:?}, ServiceControllerKind: {:?} already exists.  Failed to add.",
+            "The pair Principal: {:?}, ServiceControllerKind: {:?} does not exist.  Failed to remove.",
+            principal,
+            ServiceControllerKind::Admin
+        ))
+    }
+}
+
+#[update(guard = "is_owner")]
+fn remove_owner(principal: Principal) -> Result<(), String> {
+    if State::mutate_state(|state| state.remove_owner(&principal)) {
+        Ok(())
+    } else {
+        Err(format!(
+            "The pair Principal: {:?}, ServiceControllerKind: {:?} does not exist.  Failed to remove.",
             principal,
             ServiceControllerKind::Admin
         ))
