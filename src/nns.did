@@ -36,7 +36,7 @@ service nns_registry : {
 
     // Whitelist Management
     whitelist_principals: (vec principal) -> (vec principal);
-    get_status: (principal) -> (Status);
+    get_status: (principal) -> (Status) query;
 
     // NNS List Management
     add_nns_principal: (nns_principal: principal) -> (EmptyResult);
