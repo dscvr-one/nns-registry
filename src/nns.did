@@ -3,16 +3,25 @@ type EmptyResult = variant {
     Err: text;
 };
 
+type Status = variant {
+    Claimed,
+    Whitelisted,
+    NotWhitelisted
+}
+
 service nns_registry : {
-    test: () -> (text) query;
+    // Admin Management
+    add_admin: (principal) -> (EmptyResult);
+    remove_admin: (principal) -> (EmptyResult);
+    get_admins: () -> (vec principal) query;
+
+    get_status: (principal) -> (bool) Status;
 
     // Whitelist Management
-    whitelist_contains: (principal) -> (bool) query;
-    whitelist_principal: (principal) -> (EmptyResult);
+    whitelist_principals: (vec principal) -> (vec principal);
 
     // NNS List Management
     add_nns_principal: (nns_principal: principal) -> (EmptyResult);
-    add_non_dscvr_nns_principal: (site_principal: principal, nns_principal: principal) -> (EmptyResult);
     get_nns_principals: () -> (vec principal) query;
-    set_max_neurons: (nat8) -> ();
+    set_max_neurons: (nat8) -> (EmptyResult);
 }

@@ -26,11 +26,9 @@ impl PartialEq<ServiceController> for ServiceController {
 
 impl ServiceControllers {
     pub fn has_access(&self, kind: ServiceControllerKind, controller_id: Principal) -> bool {
-        return if let Some(pair) = self.0.iter().find(|p| p.kind == kind) {
-            controller_id == pair.controller_id
-        } else {
-            false
-        };
+        self.0
+            .iter()
+            .any(|r| r.kind == kind && r.controller_id == controller_id)
     }
 
     pub fn ref_values(&self) -> &Vec<ServiceController> {

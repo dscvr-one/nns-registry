@@ -8,19 +8,15 @@ pub mod prelude {
     pub use serde::{Deserialize, Serialize};
 }
 
+use std::collections::HashSet;
+
 use crate::guards::*;
 use crate::service_controller::ServiceControllerKind;
 use crate::state::State;
 use prelude::*;
+use state::Status;
 
 fn main() {}
-
-#[query]
-fn test() -> String {
-    let s = String::from("Hello, world!");
-    ic_cdk::println!("{}", s);
-    s
-}
 
 #[init]
 fn init() {
@@ -31,23 +27,27 @@ fn init() {
 }
 
 #[query]
-fn whitelist_contains(principal: Principal) -> bool {
-    State::read_state(|state| state.whitelist_contains(&principal))
+fn get_status() -> Status {
+    State::read_state(|state| state.get_status(&ic_cdk::api::caller()))
 }
 
 #[update(guard = "is_owner")]
-fn whitelist_principal(principal: Principal) -> Result<(), String> {
-    State::mutate_state(|state| state.whitelist_principal(principal))
+fn whitelist_principals(principals: Vec<Principal>) -> Vec<Principal> {
+    let mut already_whitelisted = HashSet::<Principal>::default();
+    State::mutate_state(|state| {
+        for principal in principals.into_iter() {
+            if state.whitelist_principal(principal).is_err() {
+                already_whitelisted.insert(principal);
+            }
+        }
+    });
+    already_whitelisted.into_iter().collect::<Vec<_>>()
 }
 
 #[update]
 fn add_nns_principal(nns_principal: Principal) -> Result<(), String> {
     State::mutate_state(|state| state.add_nns_principal(ic_cdk::api::caller(), nns_principal))
-}
-
-#[update]
-fn add_non_dscvr_nns_principal(site_principal: Principal, nns_principal: Principal) -> Result<(), String> {
-    State::mutate_state(|state| state.add_nns_principal(site_principal, nns_principal))
+        .map_err(|e| e.to_string())
 }
 
 #[query(guard = "is_admin")]
@@ -56,8 +56,8 @@ fn get_nns_principals() -> Vec<Principal> {
 }
 
 #[query(guard = "is_admin")]
-fn set_max_neurons(max_neurons: usize) {
-    State::mutate_state(|state| state.set_max_neurons(max_neurons))
+fn set_max_neurons(max_neurons: usize) -> Result<(), String> {
+    State::mutate_state(|state| state.set_max_neurons(max_neurons)).map_err(|e| e.to_string())
 }
 
 #[query]

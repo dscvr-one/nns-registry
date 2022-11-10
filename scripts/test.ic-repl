@@ -1,0 +1,49 @@
+// NOTE: when accessing an environment variable a default is always needed
+// otherwise ic-repl panics
+import nns = "${NNS_CANISTER_ID:-rwlgt-iiaaa-aaaaa-aaaaa-cai}" as "../src/nns.did";
+
+// no admins have been added, so should be empty
+let result = call nns.get_admins();
+assert result == vec {};
+
+// only owner can add admin
+identity future_admin;
+let err = fail call nns.add_admin(future_admin);
+assert err ~= "The Replica";
+
+// only admin can get nns principals
+let err = fail call nns.get_nns_principals();
+assert err ~= "The Replica";
+
+identity whitelist_1
+identity whitelist_2
+identity whitelist_3
+identity nns_principal_1
+identity nns_principal_2
+
+// add an admin
+identity default "~/.config/dfx/identity/default/identity.pem";
+let result = call nns.add_admin(future_admin);
+assert result == variant { Ok };
+// add some whitelisted principals
+let result = call nss.whitelist_principals(vec {whitelist_1, whitelist_2, whitelist_3});
+assert result = vec {};
+
+function count(a, b) {
+   add(a, 1)
+};
+// whitelist principals that are already whitelisted
+let result = call nss.whitelist_principals(vec {whitelist_2, whitelist_3});
+assert result.fold(0, count) == 2;
+
+// admin should be able to access principals
+identity future_admin;
+let result = call nns.get_nns_principals();
+assert result == vec {};
+
+// check status
+let result = call nns.get_status();
+assert result = variant { NotWhitelisted };
+
+// add a whitelist
+identity 
